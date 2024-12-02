@@ -15,6 +15,6 @@ shcrapy comes with 3 built in flags or arguements
 
 `shcrapy -e mp3,pdf thenarrowpath.com/audio/audio-books` - collect mp3 and pdf files from a sub-url
 
-`shcrapy -e mp3,zip,pdf -i radio thenarrowpath.com` - collect mp3, zip amd pdf files while ignoring any link including the word 'radio'
+`shcrapy -e mp3,zip,pdf -i radio thenarrowpath.com` - collect mp3, zip and pdf files while ignoring any link including the word 'radio'
 
 shcrapy will also work for sub-urls. It will only collect links below any sub-url specified.
