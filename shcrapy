@@ -29,7 +29,7 @@ while getopts "e:i:hf" opt; do
     case $opt in
         e) EXTENSIONS="$OPTARG" ;;
         i) IGNORE="$OPTARG" ;;
-	      f) FORCE=1 ;;
+	f) FORCE=1 ;;
       	h) usage ;;
         *) usage ;;
     esac
