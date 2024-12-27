@@ -32,7 +32,7 @@
 usage() {
 	echo "Usage: shcrapy [-h|-f|-e [extension(s)]|-i [word(s)] <URL>"
 	echo "	-e | --extensions [extension(s)]  comma separated list of extensions to scrape for"
-	echo "	-i | --ignore [word(s)]           comma separated list of words to ignore in URLS"
+	echo "	-i | --ignore     [word(s)]       comma separated list of words to ignore in URLS"
 	echo "	-f | --force                      crawl all links, including extensions and special characters (?,#)"
 	echo "	-h | --help                       show this help message"
 	echo "Example: shcrapy -f -e mp3,zip,pdf -i keyword1,keyword2 domain.example.com"
