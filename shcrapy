@@ -2,18 +2,14 @@
 # shcrapy - a tool to crawl and collect links from a website
 
 usage() {
-	echo "Usage: $0 -eihf <URL>"
-	echo "	-e	comma separated list of extensions to scrape for"
-	echo "	-i 	comma separated list of words to ignore in URLS"
-	echo "	-f	crawl all links, including extensions and special characters (?,#)"
-	echo "	-h	show this help message"
+	echo "Usage: $0 [-h|-f|-e [extension(s)]|-i [word(s)] <URL>"
+	echo "	-e|--extensions        comma separated list of extensions to scrape for"
+	echo "	-i|--ignore            comma separated list of words to ignore in URLS"
+	echo "	-f|--force             crawl all links, including extensions and special characters (?,#)"
+	echo "	-h|--help              show this help message"
 	echo "Example: $0 -f -e mp3,zip,pdf -i keyword1,keyword2 domain.example.com"
 	exit 1
 }
-
-if [ "$#" -lt 1 ]; then
-	usage
-fi
 
 if ! command -v lynx > /dev/null; then
 	echo "Error: Lynx text browser is not installed."
@@ -24,39 +20,59 @@ fi
 EXTENSIONS=""
 IGNORE=""
 FORCE=0
-
-while getopts "e:i:hf" opt; do
-    case $opt in
-        e) EXTENSIONS="$OPTARG" ;;
-        i) IGNORE="$OPTARG" ;;
-	f) FORCE=1 ;;
-      	h) usage ;;
-        *) usage ;;
+while [ "$#" -gt 0 ]; do
+    case "${1}" in
+	-h|--help|help)
+	    usage
+	    ;;
+        -e|--extensions)
+            EXTENSIONS="${2}"
+            shift 2
+            ;;
+        -i|--ignore)
+            IGNORE="${2}"
+            shift 2
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
+            ;;
+        -*)
+            echo "Unknown option: \"${1}\""
+            exit 1
+            ;;
+        *)
+            break
+            ;;
     esac
 done
-shift $((OPTIND -1))
-BASE_URL=$1
-BASE_DOMAIN="$(echo $BASE_URL | sed "s|http.*://||" | awk -F'/' '{print $1}')"
 
-if ! ping -c 1 "$BASE_DOMAIN" > /dev/null; then
-	echo "$BASE_DOMAIN is down, or incorrectly formatted"
-	exit 1
-fi
-
-if [ -z $EXTENSIONS ]; then
-	echo "Error: -e must be set"
+if [ "$#" -ne 1 ]; then
 	usage
 fi
 
-EXTENSIONS=$(echo "$EXTENSIONS" | tr ',' '|')
-IGNORE=$(echo "$IGNORE" | tr ',' '|')
+BASE_URL="${1}"
+BASE_DOMAIN="$(echo $BASE_URL | sed "s|http.*://||" | awk -F'/' '{print $1}')"
 
-OUTPUT_FILE="$(echo "$BASE_DOMAIN" | tr '\/' '_')"_downloadable_files.txt
-if [ ! -f "$OUTPUT_FILE" ]; then
-    touch "$OUTPUT_FILE"
+if ! ping -c 1 "${BASE_DOMAIN}" > /dev/null; then
+	echo "${BASE_DOMAIN} is down, or incorrectly formatted"
+	exit 1
 fi
 
-VISITED_FILE="$(echo "$BASE_DOMAIN" | tr '\/' '_')"_visited_urls.txt
+if [ -z ${EXTENSIONS} ]; then
+	echo "Error: [-e|--extensions] must be set."
+	usage
+fi
+
+EXTENSIONS=$(echo "${EXTENSIONS}" | tr ',' '|')
+IGNORE=$(echo "${IGNORE}" | tr ',' '|')
+
+OUTPUT_FILE="$(echo "${BASE_DOMAIN}" | tr '\/' '_')"_downloadable_files.txt
+if [ ! -f "${OUTPUT_FILE}" ]; then
+    touch "${OUTPUT_FILE}"
+fi
+
+VISITED_FILE="$(echo "${BASE_DOMAIN}" | tr '\/' '_')"_visited_urls.txt
 # Always reset visited file
 : > "$VISITED_FILE"
 
@@ -64,39 +80,39 @@ crawl() {
 	url="$1"
 
     	# Get links from the current URL and extract full URLs
-    	if ! grep -Fxq "$url" "$VISITED_FILE"; then
-        	echo "$url" >> "$VISITED_FILE"
-        	lynx -dump -nonumbers "$url" | grep -oE "http[^ ]+\.($EXTENSIONS)$" | while read -r file_url; do
-            		if ! grep -Fxq "$file_url" "$OUTPUT_FILE"; then
-                		echo "$file_url" >> "$OUTPUT_FILE"
-                		echo "added $file_url to download list"
+    	if ! grep -Fxq "${url}" "${VISITED_FILE}"; then
+        	echo "${url}" >> "${VISITED_FILE}"
+        	lynx -dump -nonumbers "${url}" | grep -Eo "http[^ ]+\.(${EXTENSIONS})$" | while read -r file_url; do
+            		if ! grep -Fxq "${file_url}" "${OUTPUT_FILE}"; then
+                		echo "${file_url}" >> "${OUTPUT_FILE}"
+                		echo "added ${file_url} to download list"
             		fi
         	done
     	fi
 
 	# Get all links to follow
-	if echo "$url" | grep -q "$BASE_URL"; then
-		lynx -dump -nonumbers "$url" | grep -E "$BASE_DOMAIN/[^ ]+" | sort -u | while read -r link; do
-		if ! grep -Fxq "$link" "$VISITED_FILE"; then
-			# Check the extensions and ignore conditions
-			if echo "$link" | grep -qoE "[?#<>]+" && [ "$FORCE" -ne 1 ]; then
-				continue
-			fi
-                	if echo "$link" | grep -qoE "\.[a-zA-Z0-9]+$" && ! echo "$link" | grep -qoE "\.(php|html|htm)$" && [ "$FORCE" -ne 1 ]; then
-                		continue
-                	elif [ -n "$IGNORE" ] && echo "$link" | grep -qoE "($IGNORE)"; then
-                		continue
-                	else
-                		crawl "$link"
-                	fi
-    		fi
-        done
+	if echo "${url}" | grep -q "${BASE_URL}"; then
+		lynx -dump -nonumbers "${url}" | grep -E "${BASE_DOMAIN}/[^ ]+" | sort -u | while read -r link; do
+			if ! grep -Fxq "${link}" "${VISITED_FILE}"; then
+				# Check the extensions and ignore conditions
+				if echo "${link}" | grep -qoE "[?#<>]+" && [ "${FORCE}" -ne 1 ]; then
+					continue
+				fi
+                		if echo "${link}" | grep -Eoq "\.[a-zA-Z0-9]+$" && ! echo "${link}" | grep -Eoq "\.(php|html|htm)$" && [ "${FORCE}" -ne 1 ]; then
+                			continue
+                		elif [ -n "${IGNORE}" ] && echo "${link}" | grep -qoE "(${IGNORE})"; then
+                			continue
+                		else
+                			crawl "${link}"
+                		fi
+    			fi
+        	done
 	fi
 }
 
 # Start crawling from the base URL
-crawl "$BASE_URL"
+crawl "${BASE_URL}"
 
 # Count the number of collected links and print the result
-link_count=$(wc -l < "$OUTPUT_FILE")
-echo "Finished. Collected $link_count links."
+link_count=$(wc -l < "${OUTPUT_FILE}")
+echo "Finished. Collected ${link_count} links."
