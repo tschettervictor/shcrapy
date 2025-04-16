@@ -13,6 +13,7 @@ shcrapy comes with 3 built in flags or arguments
 - use the `-i|--ignore` flag to specify a comma separated list of words to ignore. If the word is found in the URL, it will not scrape that URL. This is useful to ignore certain areas of a website, for example "radio"
 - use the `-f|--force` flag to scrape every sigle URL. Normally shcrapy will avoid scraping links that include special characters, which are usually used to navigate a single page, or query on a single page. It also does not scrape links ending with an extension, but instead, simply saves them to the output file. But sometimes it can be desireable. Be warned, this will take quite long for most sites, especially if it is scraping large mp3 files.
 - use the `-d|--depth` flag to specify a "depth" value. Normally shcrapy will search stricly inside the URL that is entered. If this is set to 2, for example, shcrapy will scrape the entered URL, as well as any URLs that are linked on any of the pages it scrapes. If set to 3, it will dig down 3 layers.
+
 Once started, shcrapy will save specified links to a file in the directory where it is running named after the URL that is used. Once it is finished running, the contents of the file can be pasted into a downloader like JDownloader to download them all.
 
 ## Examples
