@@ -8,7 +8,7 @@ shcrapy is a tool that was created to collect mp3 (and any extension) links from
 
 ## Instructions
 
-shcrapy comes with 3 built in flags or arguments
+shcrapy comes with 4 built in flags or arguments
 - use the `-e|--extensions` flag to specify a comma separated list of extensions to scrape for
 - use the `-i|--ignore` flag to specify a comma separated list of words to ignore. If the word is found in the URL, it will not scrape that URL. This is useful to ignore certain areas of a website, for example "radio"
 - use the `-f|--force` flag to scrape every sigle URL. Normally shcrapy will avoid scraping links that include special characters, which are usually used to navigate a single page, or query on a single page. It also does not scrape links ending with an extension, but instead, simply saves them to the output file. But sometimes it can be desireable. Be warned, this will take quite long for most sites, especially if it is scraping large mp3 files.
