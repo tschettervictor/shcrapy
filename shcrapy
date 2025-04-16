@@ -34,17 +34,19 @@ usage() {
     cat << EOF
     Options:
 
-    -e | --extensions <extension(s)>     comma separated list of extensions to scrape for
-    -f | --force                         crawl all links, including extensions and special characters (?,#)
-    -i | --ignore     <word(s)>          comma separated list of words to ignore in URLS
-         --no-ping                       do not check if the site is up
-    -h | --help                          show this help message
+    -d | --depth      <value>            Numerical value of recursive urls to scrape.
+    -e | --extensions <extension(s)>     Comma separated list of extensions to scrape for.
+    -f | --force                         Crawl all links, including extensions and special characters (?,#).
+    -i | --ignore     <word(s)>          Comma separated list of words to ignore in URLS.
+         --no-ping                       Co not check if the site is up.
+    -h | --help                          Show this help message.
     
     Example: shcrapy -f -e mp3,zip,pdf -i keyword1,keyword2 domain.example.com
 EOF
     exit 1
 }
 
+# Validate lynx browser availability
 if ! command -v lynx > /dev/null; then
 	echo "Error: Lynx text browser is not installed."
 	echo "Please install Lynx to proceed."
@@ -56,22 +58,33 @@ EXTENSIONS=""
 IGNORE=""
 FORCE="0"
 NO_PING="0"
+DEPTH="1"
+DEPTH_COUNT="1"
 while [ "$#" -gt 0 ]; do
     case "${1}" in
 	-h|--help|help)
 	    usage
 	    ;;
+        -d|--depth)
+            if ! echo "${DEPTH}" | grep -qE "^[0-9]+$"; then
+                echo "Depth must be a number."
+                exit 1
+            else
+                DEPTH="${2}"
+                shift 2
+            fi
+            ;;
         -e|--extensions)
             EXTENSIONS="${2}"
-            shift 2
-            ;;
-        -i|--ignore)
-            IGNORE="${2}"
             shift 2
             ;;
         -f|--force)
             FORCE="1"
             shift
+            ;;
+        -i|--ignore)
+            IGNORE="${2}"
+            shift 2
             ;;
         --no-ping)
             NO_PING="1"
@@ -98,6 +111,7 @@ fi
 
 BASE_URL="${1}"
 BASE_DOMAIN="$(echo $BASE_URL | sed "s|http.*://||" | awk -F'/' '{print $1}')"
+EXTRA_DOMAINS=""
 
 # Check if domain is up
 if [ "${NO_PING}" -eq 0 ]; then
@@ -127,6 +141,7 @@ VISITED_FILE="$(echo "${BASE_DOMAIN}" | tr '\/' '_')"_visited_urls.txt
 : > "$VISITED_FILE"
 
 crawl() {
+
     url="$1"
 
     # Get links from the current URL and extract full URLs
@@ -138,6 +153,10 @@ crawl() {
                 echo "added ${file_url} to download list"
             fi
         done
+    fi
+
+    if [ "${DEPTH_COUNT}" -lt "${DEPTH}" ]; then
+        EXTRA_DOMAINS="$(printf '%s\n%s' "${EXTRA_DOMAINS}" "$(lynx -dump -nonumbers "${url}" | grep -v "${BASE_DOMAIN}" | grep -E  "^http.*" | sort -u)")"
     fi
 
     # Get all links to follow
@@ -162,6 +181,17 @@ crawl() {
 
 # Start crawling from the base URL
 crawl "${BASE_URL}"
+
+if [ -n "${EXTRA_DOMAINS}" ]; then
+    DEPTH_COUNT=$((DEPTH_COUNT + 1))
+    ADDITIONAL_DOMAINS="${EXTRA_DOMAINS}"
+    EXTRA_DOMAINS=""
+    for _domain in ${ADDITIONAL_DOMAINS}; do
+        BASE_URL="${_domain}"
+        BASE_DOMAIN="$(echo $BASE_URL | sed "s|http.*://||" | awk -F'/' '{print $1}')"
+        crawl "${BASE_URL}"
+    done
+fi
 
 # Count the number of collected links and print the result
 link_count=$(wc -l < "${OUTPUT_FILE}")
