@@ -66,7 +66,7 @@ while [ "$#" -gt 0 ]; do
 	    usage
 	    ;;
         -d|--depth)
-            if ! echo "${DEPTH}" | grep -qE "^[0-9]+$"; then
+            if ! echo "${2}" | grep -qE "^[0-9]+$"; then
                 echo "Depth must be a number."
                 exit 1
             else
@@ -111,7 +111,6 @@ fi
 
 BASE_URL="${1}"
 BASE_DOMAIN="$(echo $BASE_URL | sed "s|http.*://||" | awk -F'/' '{print $1}')"
-EXTRA_DOMAINS=""
 
 # Check if domain is up
 if [ "${NO_PING}" -eq 0 ]; then
@@ -155,8 +154,9 @@ crawl() {
         done
     fi
 
+    # Save new domains accoring to DEPTH setting
     if [ "${DEPTH_COUNT}" -lt "${DEPTH}" ]; then
-        EXTRA_DOMAINS="$(printf '%s\n%s' "${EXTRA_DOMAINS}" "$(lynx -dump -nonumbers "${url}" | grep -v "${BASE_DOMAIN}" | grep -E  "^http.*" | sort -u)")"
+        EXTRA_DOMAINS="$(printf "%s\n%s" "${EXTRA_DOMAINS}" "$(lynx -dump -nonumbers "${url}" | grep -v "${BASE_URL}" | grep -E  "^http.*" | sort -u)")"
     fi
 
     # Get all links to follow
@@ -182,13 +182,14 @@ crawl() {
 # Start crawling from the base URL
 crawl "${BASE_URL}"
 
+# Crawl additional domains
 if [ -n "${EXTRA_DOMAINS}" ]; then
     DEPTH_COUNT=$((DEPTH_COUNT + 1))
     ADDITIONAL_DOMAINS="${EXTRA_DOMAINS}"
     EXTRA_DOMAINS=""
-    for _domain in ${ADDITIONAL_DOMAINS}; do
+    echo "${ADDITIONAL_DOMAINS}" | sort -u | while IFS= read -r _domain; do
         BASE_URL="${_domain}"
-        BASE_DOMAIN="$(echo $BASE_URL | sed "s|http.*://||" | awk -F'/' '{print $1}')"
+        BASE_DOMAIN="$(echo "${BASE_URL}" | sed -E "s|http?://||" | awk -F'/' '{print $1}')"
         crawl "${BASE_URL}"
     done
 fi
