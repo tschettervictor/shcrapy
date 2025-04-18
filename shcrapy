@@ -155,7 +155,10 @@ crawl() {
     fi
 
     # Save new domains accoring to DEPTH setting
-    if [ "${DEPTH_COUNT}" -lt "${DEPTH}" ]; then
+    # Exit if depth is 0
+    if [ "${DEPTH}" -eq 0 ]; then
+        return 0
+    elif [ "${DEPTH_COUNT}" -lt "${DEPTH}" ]; then
         EXTRA_DOMAINS="$(printf "%s\n%s" "${EXTRA_DOMAINS}" "$(lynx -dump -nonumbers "${url}" | grep -v "${BASE_URL}" | grep -E  "^http.*" | sort -u)")"
     fi
 
@@ -163,7 +166,7 @@ crawl() {
     if echo "${url}" | grep -q "${BASE_URL}"; then
         lynx -dump -nonumbers "${url}" | grep -E "${BASE_DOMAIN}/[^ ]+" | sort -u | while read -r link; do
             if ! grep -Fxq "${link}" "${VISITED_FILE}"; then
-	        # Check the extensions and ignore conditions
+	            # Check the extensions and ignore conditions
                 if echo "${link}" | grep -qoE "[?#<>]+" && [ "${FORCE}" -ne 1 ]; then
                     continue
                 fi
@@ -182,7 +185,8 @@ crawl() {
 # Start crawling from the base URL
 crawl "${BASE_URL}"
 
-# Crawl additional domains
+# Crawl any additional domains
+# DEPTH setting affects this
 if [ -n "${EXTRA_DOMAINS}" ]; then
     DEPTH_COUNT=$((DEPTH_COUNT + 1))
     ADDITIONAL_DOMAINS="${EXTRA_DOMAINS}"
