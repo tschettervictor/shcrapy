@@ -13,8 +13,8 @@ shcrapy comes with a few built in flags or arguments
 - use the `-e|--extensions` flag to specify a comma separated list of extensions to scrape for
 - use the `-i|--ignore` flag to specify a comma separated list of words to ignore. If the word is found in the URL, it will not scrape that URL. This is useful to ignore certain areas of a website, for example "radio"
 - use the `-f|--force` flag to scrape every sigle URL. Normally shcrapy will avoid scraping links that include special characters, which are usually used to navigate a single page, or query on a single page. It also does not scrape links ending with an extension, but instead, simply saves them to the output file. But sometimes it can be desireable. Be warned, this will take quite long for most sites, especially if it is scraping large mp3 files.
-- use the `-d|--depth` flag to specify a "depth" value. Normally shcrapy will search stricly inside the URL that is entered. If this is set to 2, for example, shcrapy will scrape the entered URL, as well as any URLs that are linked on any of the pages it scrapes. If set to 3, it will dig down 3 layers. Be warned, this will take some time. If you want to scrape only a single URL, set this to 0. See example below.
-- use the `--no-ping` flag to skip checking if the domain is up. This is useful when the domains does not allow pings.
+- use the `-d|--depth` flag to specify a "depth" value. Normally shcrapy will search stricly inside the URL that is entered. If this is set to 2, for example, shcrapy will scrape the entered URL, as well as any URLs that are linked on any of the pages it scrapes. If set to 3, it will dig down 3 layers. Be warned, this will take some time. If you want to scrape only a single URL, set this to 0. See example below. Default is 1.
+- use the `--no-ping` flag to skip checking if the domain is up. This is useful when the domains do not allow pings.
 
 Once started, shcrapy will save specified links to a file in the directory where it is running named after the URL that is used. Once it is finished running, the contents of the file can be pasted into a downloader like JDownloader to download them all.
 
@@ -26,7 +26,7 @@ Once started, shcrapy will save specified links to a file in the directory where
 
 `./shcrapy -e mp3,pdf thenarrowpath.com/audio/audio-books` - collect mp3 and pdf files from a sub-url
 
-`./shcrapy -e mp3,zip,pdf -i radio thenarrowpath.com` - collect mp3, zip and pdf files while ignoring any link including the word 'radio'
+`./shcrapy -e mp3,zip,pdf -i radio thenarrowpath.com` - collect mp3, zip and pdf files while ignoring any link containing the word 'radio'
 
 `./shcrapy -e mp3 -d 2 thenarrowpath.com` - collect mp3 files from a url, and any urls linked on any page within the url (depth 2)
 
